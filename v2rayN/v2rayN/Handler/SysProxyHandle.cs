@@ -138,7 +138,8 @@ namespace v2rayN.Handler
                 ? $"global {strProxy} {strExceptions}"
                 : $"pac {strProxy}";
 
-            ExecSysproxy(arguments);
+            ProxySetting.SetProxy(strProxy, strExceptions, global?2:4);
+            //ExecSysproxy(arguments);
         }
 
         // set system proxy to 1 (null) (null) (null)
@@ -150,7 +151,8 @@ namespace v2rayN.Handler
                 //_userSettings = new SysproxyConfig();
                 //Save();
                 // clear system setting
-                ExecSysproxy("set 1 - - -");
+                ProxySetting.UnsetProxy();
+                //ExecSysproxy("set 1 - - -");
             }
             catch (Exception)
             {

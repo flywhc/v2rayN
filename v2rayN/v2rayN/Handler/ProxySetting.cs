@@ -11,6 +11,10 @@ namespace v2rayN.Handler
             return SetProxy(null, null, 1);
         }
 
+        // type:
+        // 1: no proxy
+        // 2: proxy server
+        // 4: autoconfig url - PAC
         public static bool SetProxy(string strProxy, string exceptions, int type)
         {
             InternetPerConnOptionList list = new InternetPerConnOptionList();
