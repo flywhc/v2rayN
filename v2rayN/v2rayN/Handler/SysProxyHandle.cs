@@ -22,7 +22,7 @@ namespace v2rayN.Handler
         //  <proxy-server><CR-LF>
         //  <bypass-list><CR-LF>
         //  <pac-url>
-        private static SysproxyConfig _userSettings = null;
+        //private static SysproxyConfig _userSettings = null;
 
         enum RET_ERRORS : int
         {
@@ -36,15 +36,15 @@ namespace v2rayN.Handler
 
         static SysProxyHandle()
         {
-            try
-            {
-                FileManager.UncompressFile(Utils.GetTempPath("sysproxy.exe"),
-                    Environment.Is64BitOperatingSystem ? Resources.sysproxy64_exe : Resources.sysproxy_exe);
-            }
-            catch (IOException ex)
-            {
-                Utils.SaveLog(ex.Message, ex);
-            }
+            //try
+            //{
+            //    FileManager.UncompressFile(Utils.GetTempPath("sysproxy.exe"),
+            //        Environment.Is64BitOperatingSystem ? Resources.sysproxy64_exe : Resources.sysproxy_exe);
+            //}
+            //catch (IOException ex)
+            //{
+            //    Utils.SaveLog(ex.Message, ex);
+            //}
         }
 
 
@@ -67,11 +67,11 @@ namespace v2rayN.Handler
                 if (type == ESysProxyType.ForcedChange)
                 {
                     var strExceptions = $"{config.constItem.defIEProxyExceptions};{config.systemProxyExceptions}";
-                    SetIEProxy(true, $"{Global.Loopback}:{port}", strExceptions);
+                    ProxySetting.SetProxy($"{Global.Loopback}:{port}", strExceptions, 2);
                 }
                 else if (type == ESysProxyType.ForcedClear)
                 {
-                    ResetIEProxy();
+                    ProxySetting.UnsetProxy();
                 }
                 else if (type == ESysProxyType.Unchanged)
                 {
@@ -96,50 +96,13 @@ namespace v2rayN.Handler
             }
         }
 
-        public static void SetIEProxy(bool enable, bool global, string strProxy)
-        {
-            //Read();
-
-            //if (!_userSettings.UserSettingsRecorded)
-            //{
-            //    // record user settings
-            //    ExecSysproxy("query");
-            //    //ParseQueryStr(_queryStr);
-            //}
-
-            string arguments;
-            if (enable)
-            {
-                arguments = global
-                    ? $"global {strProxy} {Global.IEProxyExceptions}"
-                    : $"pac {strProxy}";
-            }
-            else
-            {
-                // restore user settings
-                string flags = _userSettings.Flags;
-                string proxy_server = _userSettings.ProxyServer ?? "-";
-                string bypass_list = _userSettings.BypassList ?? "-";
-                string pac_url = _userSettings.PacUrl ?? "-";
-                arguments = $"set {flags} {proxy_server} {bypass_list} {pac_url}";
-
-                // have to get new settings
-                _userSettings.UserSettingsRecorded = false;
-            }
-
-            //Save();
-            ExecSysproxy(arguments);
-        }
-
-
         public static void SetIEProxy(bool global, string strProxy, string strExceptions)
         {
             string arguments = global
                 ? $"global {strProxy} {strExceptions}"
                 : $"pac {strProxy}";
 
-            ProxySetting.SetProxy(strProxy, strExceptions, global?2:4);
-            //ExecSysproxy(arguments);
+            ExecSysproxy(arguments);
         }
 
         // set system proxy to 1 (null) (null) (null)
@@ -151,8 +114,7 @@ namespace v2rayN.Handler
                 //_userSettings = new SysproxyConfig();
                 //Save();
                 // clear system setting
-                ProxySetting.UnsetProxy();
-                //ExecSysproxy("set 1 - - -");
+                ExecSysproxy("set 1 - - -");
             }
             catch (Exception)
             {
@@ -164,6 +126,8 @@ namespace v2rayN.Handler
 
         private static void ExecSysproxy(string arguments)
         {
+            throw new NotImplementedException();
+            /*
             // using event to avoid hanging when redirect standard output/error
             // ref: https://stackoverflow.com/questions/139593/processstartinfo-hanging-on-waitforexit-why
             // and http://blog.csdn.net/zhangweixing0/article/details/7356841
@@ -235,7 +199,6 @@ namespace v2rayN.Handler
                     {
                         throw new Exception(stderr);
                     }
-
                     //if (arguments == "query")
                     //{
                     //    if (stdout.IsNullOrWhiteSpace() || stdout.IsNullOrEmpty())
@@ -245,9 +208,7 @@ namespace v2rayN.Handler
                     //    _queryStr = stdout;
                     //}
                 }
-            }
+            */
         }
-
-
     }
 }
