@@ -3,4 +3,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartArguments>C:\Githubb\v2rayN\v2rayN\v2rayUpgrade\bin\Debug\v2ray-windows.zip</StartArguments>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugNoPrivoxy|AnyCPU'">
+    <StartArguments>C:\Githubb\v2rayN\v2rayN\v2rayUpgrade\bin\Debug\v2ray-windows.zip</StartArguments>
+  </PropertyGroup>
 </Project>

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2050
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "v2rayN", "v2rayN\v2rayN.csproj", "{0A9785E6-D256-4B73-9757-4EF59955FD1E}"
 EndProject
@@ -11,31 +11,51 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x86 = Debug|x86
+		DebugNoPrivoxy|Any CPU = DebugNoPrivoxy|Any CPU
+		DebugNoPrivoxy|x86 = DebugNoPrivoxy|x86
 		Release|Any CPU = Release|Any CPU
 		Release|x86 = Release|x86
+		ReleaseNoPrivoxy|Any CPU = ReleaseNoPrivoxy|Any CPU
+		ReleaseNoPrivoxy|x86 = ReleaseNoPrivoxy|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.Debug|x86.Build.0 = Debug|Any CPU
+		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.DebugNoPrivoxy|Any CPU.ActiveCfg = DebugNoPrivoxy|Any CPU
+		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.DebugNoPrivoxy|Any CPU.Build.0 = DebugNoPrivoxy|Any CPU
+		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.DebugNoPrivoxy|x86.ActiveCfg = DebugNoPrivoxy|Any CPU
+		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.DebugNoPrivoxy|x86.Build.0 = DebugNoPrivoxy|Any CPU
 		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.Release|x86.ActiveCfg = Release|Any CPU
+		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.ReleaseNoPrivoxy|Any CPU.ActiveCfg = ReleaseNoPrivoxy|Any CPU
+		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.ReleaseNoPrivoxy|Any CPU.Build.0 = ReleaseNoPrivoxy|Any CPU
+		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.ReleaseNoPrivoxy|x86.ActiveCfg = ReleaseNoPrivoxy|Any CPU
+		{0A9785E6-D256-4B73-9757-4EF59955FD1E}.ReleaseNoPrivoxy|x86.Build.0 = ReleaseNoPrivoxy|Any CPU
 		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.Debug|x86.Build.0 = Debug|Any CPU
+		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.DebugNoPrivoxy|Any CPU.ActiveCfg = DebugNoPrivoxy|Any CPU
+		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.DebugNoPrivoxy|Any CPU.Build.0 = DebugNoPrivoxy|Any CPU
+		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.DebugNoPrivoxy|x86.ActiveCfg = DebugNoPrivoxy|Any CPU
+		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.DebugNoPrivoxy|x86.Build.0 = DebugNoPrivoxy|Any CPU
 		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.Release|x86.ActiveCfg = Release|Any CPU
 		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.Release|x86.Build.0 = Release|Any CPU
+		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.ReleaseNoPrivoxy|Any CPU.ActiveCfg = ReleaseNoPrivoxy|Any CPU
+		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.ReleaseNoPrivoxy|Any CPU.Build.0 = ReleaseNoPrivoxy|Any CPU
+		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.ReleaseNoPrivoxy|x86.ActiveCfg = ReleaseNoPrivoxy|Any CPU
+		{F82BE52A-155C-492C-9E0A-1E917EC62C78}.ReleaseNoPrivoxy|x86.Build.0 = ReleaseNoPrivoxy|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		RESX_SortFileContentOnSave = True
 		SolutionGuid = {56B88873-C9CC-4069-A1E5-DABD6C6E865E}
+		RESX_SortFileContentOnSave = True
 	EndGlobalSection
 EndGlobal

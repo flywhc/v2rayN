@@ -1055,34 +1055,10 @@ namespace v2rayN.Forms
 
         #region 托盘事件
 
-        bool clicked = false;
-        private async void notifyMain_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {// 单击左键开关系统代理服务器
-                // 首先判断是否为双击图标
-                if (clicked) return;
-                clicked = true;
-                await Task.Delay(SystemInformation.DoubleClickTime);
-                if (!clicked) return;
-                clicked = false;
-                var type = config.sysProxyType;
-                if (type == ESysProxyType.ForcedChange)
-                {
-                    SetListenerType(ESysProxyType.ForcedClear);
-                }
-                else
-                {
-                    SetListenerType(ESysProxyType.ForcedChange);
-                }
-            }
-        }
-
-        private void notifyMain_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void notifyMain_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
-                clicked = false;
                 ShowForm();
             }
         }

@@ -16,14 +16,15 @@ namespace v2rayN.Handler
 
         //private static string _queryStr;
 
+#if !NoPrivoxy
         // In general, this won't change
         // format:
         //  <flags><CR-LF>
         //  <proxy-server><CR-LF>
         //  <bypass-list><CR-LF>
         //  <pac-url>
-        //private static SysproxyConfig _userSettings = null;
-
+        private static SysproxyConfig _userSettings = null;
+#endif
         enum RET_ERRORS : int
         {
             RET_NO_ERROR = 0,
@@ -36,15 +37,17 @@ namespace v2rayN.Handler
 
         static SysProxyHandle()
         {
-            //try
-            //{
-            //    FileManager.UncompressFile(Utils.GetTempPath("sysproxy.exe"),
-            //        Environment.Is64BitOperatingSystem ? Resources.sysproxy64_exe : Resources.sysproxy_exe);
-            //}
-            //catch (IOException ex)
-            //{
-            //    Utils.SaveLog(ex.Message, ex);
-            //}
+#if !NoPrivoxy
+            try
+            {
+                FileManager.UncompressFile(Utils.GetTempPath("sysproxy.exe"),
+                    Environment.Is64BitOperatingSystem ? Resources.sysproxy64_exe : Resources.sysproxy_exe);
+            }
+            catch (IOException ex)
+            {
+                Utils.SaveLog(ex.Message, ex);
+            }
+#endif
         }
 
 
@@ -67,11 +70,19 @@ namespace v2rayN.Handler
                 if (type == ESysProxyType.ForcedChange)
                 {
                     var strExceptions = $"{config.constItem.defIEProxyExceptions};{config.systemProxyExceptions}";
+#if NoPrivoxy
                     ProxySetting.SetProxy($"{Global.Loopback}:{port}", strExceptions, 2);
+#else
+                    SetIEProxy(true, $"{Global.Loopback}:{port}", strExceptions);
+#endif
                 }
                 else if (type == ESysProxyType.ForcedClear)
                 {
+#if NoPrivoxy
                     ProxySetting.UnsetProxy();
+#else
+                     ResetIEProxy();
+#endif
                 }
                 else if (type == ESysProxyType.Unchanged)
                 {
@@ -96,13 +107,53 @@ namespace v2rayN.Handler
             }
         }
 
+#if !NoPrivoxy
+        public static void SetIEProxy(bool enable, bool global, string strProxy)
+        {
+            //Read();
+
+            //if (!_userSettings.UserSettingsRecorded)
+            //{
+            //    // record user settings
+            //    ExecSysproxy("query");
+            //    //ParseQueryStr(_queryStr);
+            //}
+
+            string arguments;
+            if (enable)
+            {
+                arguments = global
+                    ? $"global {strProxy} {Global.IEProxyExceptions}"
+                    : $"pac {strProxy}";
+            }
+            else
+            {
+                // restore user settings
+                string flags = _userSettings.Flags;
+                string proxy_server = _userSettings.ProxyServer ?? "-";
+                string bypass_list = _userSettings.BypassList ?? "-";
+                string pac_url = _userSettings.PacUrl ?? "-";
+                arguments = $"set {flags} {proxy_server} {bypass_list} {pac_url}";
+
+                // have to get new settings
+                _userSettings.UserSettingsRecorded = false;
+            }
+
+            //Save();
+            ExecSysproxy(arguments);
+        }
+#endif
+
         public static void SetIEProxy(bool global, string strProxy, string strExceptions)
         {
             string arguments = global
                 ? $"global {strProxy} {strExceptions}"
                 : $"pac {strProxy}";
-
+#if NoPrivoxy
+            ProxySetting.SetProxy(strProxy, strExceptions, global ? 2 : 4);
+#else
             ExecSysproxy(arguments);
+#endif
         }
 
         // set system proxy to 1 (null) (null) (null)
@@ -114,7 +165,11 @@ namespace v2rayN.Handler
                 //_userSettings = new SysproxyConfig();
                 //Save();
                 // clear system setting
+#if NoPrivoxy
                 ExecSysproxy("set 1 - - -");
+#else
+                ProxySetting.UnsetProxy();
+#endif
             }
             catch (Exception)
             {
@@ -124,10 +179,9 @@ namespace v2rayN.Handler
             return true;
         }
 
+#if !NoPrivoxy
         private static void ExecSysproxy(string arguments)
         {
-            throw new NotImplementedException();
-            /*
             // using event to avoid hanging when redirect standard output/error
             // ref: https://stackoverflow.com/questions/139593/processstartinfo-hanging-on-waitforexit-why
             // and http://blog.csdn.net/zhangweixing0/article/details/7356841
@@ -208,7 +262,7 @@ namespace v2rayN.Handler
                     //    _queryStr = stdout;
                     //}
                 }
-            */
         }
+#endif
     }
 }
