@@ -166,9 +166,9 @@ namespace v2rayN.Handler
                 //Save();
                 // clear system setting
 #if NoPrivoxy
-                ExecSysproxy("set 1 - - -");
-#else
                 ProxySetting.UnsetProxy();
+#else
+                ExecSysproxy("set 1 - - -");
 #endif
             }
             catch (Exception)
