@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
 
 namespace v2rayN.Mode
 {
@@ -11,115 +11,127 @@ namespace v2rayN.Mode
         /// <summary>
         /// 日志配置
         /// </summary>
-        public Log log { get; set; }
+        public Log4Ray log { get; set; }
+
         /// <summary>
         /// 传入连接配置
         /// </summary>
-        public List<Inbounds> inbounds { get; set; }
+        public List<Inbounds4Ray> inbounds { get; set; }
+
         /// <summary>
         /// 传出连接配置
         /// </summary>
-        public List<Outbounds> outbounds { get; set; }
+        public List<Outbounds4Ray> outbounds { get; set; }
 
         /// <summary>
         /// 统计需要， 空对象
         /// </summary>
-        public Stats stats { get; set; }
+        public Stats4Ray stats { get; set; }
 
         /// </summary>
-        public API api { get; set; }
+        public API4Ray api { get; set; }
 
         /// </summary>
-        public Policy policy;
+        public Policy4Ray policy;
 
         /// <summary>
         /// DNS 配置
         /// </summary>
         public object dns { get; set; }
+
         /// <summary>
         /// 路由配置
         /// </summary>
-        public Routing routing { get; set; }
+        public Routing4Ray routing { get; set; }
     }
 
-    public class Stats { };
+    public class Stats4Ray
+    { };
 
-    public class API
+    public class API4Ray
     {
         public string tag { get; set; }
         public List<string> services { get; set; }
     }
 
-    public class Policy
+    public class Policy4Ray
     {
-        public SystemPolicy system;
+        public SystemPolicy4Ray system;
     }
 
-    public class SystemPolicy
+    public class SystemPolicy4Ray
     {
         public bool statsOutboundUplink;
         public bool statsOutboundDownlink;
     }
 
-    public class Log
+    public class Log4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string access { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string error { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string loglevel { get; set; }
     }
 
-    public class Inbounds
+    public class Inbounds4Ray
     {
         public string tag { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int port { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string listen { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string protocol { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public Sniffing sniffing { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public Inboundsettings settings { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public StreamSettings streamSettings { get; set; }
+        public Sniffing4Ray sniffing { get; set; }
 
+        /// <summary>
+        ///
+        /// </summary>
+        public Inboundsettings4Ray settings { get; set; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public StreamSettings4Ray streamSettings { get; set; }
     }
 
-    public class Inboundsettings
+    public class Inboundsettings4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string auth { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public bool udp { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string ip { get; set; }
 
@@ -129,10 +141,9 @@ namespace v2rayN.Mode
         public string address { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public List<UsersItem> clients { get; set; }
-
+        public List<UsersItem4Ray> clients { get; set; }
 
         /// <summary>
         /// VLESS
@@ -141,25 +152,28 @@ namespace v2rayN.Mode
 
         public bool allowTransparent { get; set; }
 
-        public List<AccountsItem> accounts { get; set; }
+        public List<AccountsItem4Ray> accounts { get; set; }
     }
 
-    public class UsersItem
+    public class UsersItem4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string id { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int alterId { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string email { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string security { get; set; }
 
@@ -171,104 +185,124 @@ namespace v2rayN.Mode
         /// <summary>
         /// VLESS
         /// </summary>
-        public string flow { get; set; }
-    }
-    public class Sniffing
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool enabled { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<string> destOverride { get; set; }
+        public string? flow { get; set; }
     }
 
-    public class Outbounds
+    public class Sniffing4Ray
+    {
+        public bool enabled { get; set; }
+        public List<string> destOverride { get; set; }
+        public bool routeOnly { get; set; }
+    }
+
+    public class Outbounds4Ray
     {
         /// <summary>
         /// 默认值agentout
         /// </summary>
         public string tag { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string protocol { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public Outboundsettings settings { get; set; }
+        public Outboundsettings4Ray settings { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public StreamSettings streamSettings { get; set; }
+        public StreamSettings4Ray streamSettings { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public Mux mux { get; set; }
+        public Mux4Ray mux { get; set; }
     }
 
-    public class Outboundsettings
+    public class Outboundsettings4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public List<VnextItem> vnext { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<ServersItem> servers { get; set; }
+        public List<VnextItem4Ray> vnext { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public Response response { get; set; }
+        public List<ServersItem4Ray> servers { get; set; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public Response4Ray response { get; set; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public string domainStrategy { get; set; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public int? userLevel { get; set; }
     }
 
-    public class VnextItem
+    public class VnextItem4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string address { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int port { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public List<UsersItem> users { get; set; }
+        public List<UsersItem4Ray> users { get; set; }
     }
-    public class ServersItem
+
+    public class ServersItem4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string email { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string address { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string method { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public bool ota { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string password { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int port { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int level { get; set; }
 
@@ -278,277 +312,323 @@ namespace v2rayN.Mode
         public string flow { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public List<SocksUsersItem> users { get; set; }
+        public List<SocksUsersItem4Ray> users { get; set; }
     }
 
-    public class SocksUsersItem
+    public class SocksUsersItem4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string user { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string pass { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int level { get; set; }
     }
 
-
-    public class Mux
+    public class Mux4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public bool enabled { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int concurrency { get; set; }
     }
 
-    public class Response
+    public class Response4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string type { get; set; }
     }
 
-    public class Dns
+    public class Dns4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public List<string> servers { get; set; }
     }
 
-    public class Routing
+    public class Routing4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string domainStrategy { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string domainMatcher { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public List<RulesItem> rules { get; set; }
+        public List<RulesItem4Ray> rules { get; set; }
     }
 
-    public class StreamSettings
+    [Serializable]
+    public class RulesItem4Ray
+    {
+        public string type { get; set; }
+
+        public string port { get; set; }
+
+        public List<string> inboundTag { get; set; }
+
+        public string outboundTag { get; set; }
+
+        public List<string> ip { get; set; }
+
+        public List<string> domain { get; set; }
+
+        public List<string> protocol { get; set; }
+    }
+
+    public class StreamSettings4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string network { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string security { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public TlsSettings tlsSettings { get; set; }
+        public TlsSettings4Ray tlsSettings { get; set; }
 
         /// <summary>
         /// Tcp传输额外设置
         /// </summary>
-        public TcpSettings tcpSettings { get; set; }
+        public TcpSettings4Ray tcpSettings { get; set; }
+
         /// <summary>
         /// Kcp传输额外设置
         /// </summary>
-        public KcpSettings kcpSettings { get; set; }
+        public KcpSettings4Ray kcpSettings { get; set; }
+
         /// <summary>
         /// ws传输额外设置
         /// </summary>
-        public WsSettings wsSettings { get; set; }
+        public WsSettings4Ray wsSettings { get; set; }
+
         /// <summary>
         /// h2传输额外设置
         /// </summary>
-        public HttpSettings httpSettings { get; set; }
+        public HttpSettings4Ray httpSettings { get; set; }
 
         /// <summary>
         /// QUIC
         /// </summary>
-        public QuicSettings quicSettings { get; set; }
+        public QuicSettings4Ray quicSettings { get; set; }
 
         /// <summary>
-        /// VLESS xtls
+        /// VLESS only
         /// </summary>
-        public TlsSettings xtlsSettings { get; set; }
+        public TlsSettings4Ray realitySettings { get; set; }
+
         /// <summary>
         /// grpc
         /// </summary>
-        public GrpcSettings grpcSettings { get; set; }
-
+        public GrpcSettings4Ray grpcSettings { get; set; }
     }
 
-    public class TlsSettings
+    public class TlsSettings4Ray
     {
         /// <summary>
         /// 是否允许不安全连接（用于客户端）
         /// </summary>
-        public bool allowInsecure { get; set; }
+        public bool? allowInsecure { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public string serverName { get; set; }
+        public string? serverName { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public List<string> alpn
-        {
-            get; set;
-        }
+        public List<string>? alpn { get; set; }
+
+        public string? fingerprint { get; set; }
+
+        public bool? show { get; set; } = false;
+        public string? publicKey { get; set; }
+        public string? shortId { get; set; }
+        public string? spiderX { get; set; }
     }
 
-    public class TcpSettings
+    public class TcpSettings4Ray
     {
         /// <summary>
         /// 数据包头部伪装设置
         /// </summary>
-        public Header header { get; set; }
+        public Header4Ray header { get; set; }
     }
 
-    public class Header
+    public class Header4Ray
     {
         /// <summary>
         /// 伪装
         /// </summary>
         public string type { get; set; }
+
         /// <summary>
         /// 结构复杂，直接存起来
         /// </summary>
         public object request { get; set; }
+
         /// <summary>
         /// 结构复杂，直接存起来
         /// </summary>
         public object response { get; set; }
     }
 
-    public class KcpSettings
+    public class KcpSettings4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int mtu { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int tti { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int uplinkCapacity { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int downlinkCapacity { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public bool congestion { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int readBufferSize { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int writeBufferSize { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public Header header { get; set; }
+        public Header4Ray header { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string seed { get; set; }
     }
 
-    public class WsSettings
+    public class WsSettings4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string path { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public Headers headers { get; set; }
+        public Headers4Ray headers { get; set; }
     }
-    public class Headers
+
+    public class Headers4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string Host { get; set; }
+
+        /// <summary>
+        /// 用户代理
+        /// </summary>
+        [JsonProperty("User-Agent")]
+        public string UserAgent { get; set; }
     }
 
-    public class HttpSettings
+    public class HttpSettings4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string path { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public List<string> host { get; set; }
-
     }
 
-    public class QuicSettings
+    public class QuicSettings4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string security { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string key { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
-        public Header header { get; set; }
+        public Header4Ray header { get; set; }
     }
 
-    public class GrpcSettings
+    public class GrpcSettings4Ray
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public string serviceName { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
         public bool multiMode { get; set; }
+        public int idle_timeout { get; set; }
+        public int health_check_timeout { get; set; }
+        public bool permit_without_stream { get; set; }
+        public int initial_windows_size { get; set; }
     }
 
-    public class AccountsItem
+    public class AccountsItem4Ray
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string user { get; set; }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public string pass { get; set; }
     }

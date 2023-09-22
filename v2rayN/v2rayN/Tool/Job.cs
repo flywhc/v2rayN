@@ -1,7 +1,5 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
-
 
 namespace v2rayN
 {
@@ -9,6 +7,7 @@ namespace v2rayN
      * See:
      * http://stackoverflow.com/questions/6266820/working-example-of-createjobobject-setinformationjobobject-pinvoke-in-net
      */
+
     public class Job : IDisposable
     {
         private IntPtr handle = IntPtr.Zero;
@@ -17,12 +16,12 @@ namespace v2rayN
         {
             handle = CreateJobObject(IntPtr.Zero, null);
             IntPtr extendedInfoPtr = IntPtr.Zero;
-            JOBOBJECT_BASIC_LIMIT_INFORMATION info = new JOBOBJECT_BASIC_LIMIT_INFORMATION
+            JOBOBJECT_BASIC_LIMIT_INFORMATION info = new()
             {
                 LimitFlags = 0x2000
             };
 
-            JOBOBJECT_EXTENDED_LIMIT_INFORMATION extendedInfo = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+            JOBOBJECT_EXTENDED_LIMIT_INFORMATION extendedInfo = new()
             {
                 BasicLimitInformation = info
             };
@@ -34,7 +33,7 @@ namespace v2rayN
                 Marshal.StructureToPtr(extendedInfo, extendedInfoPtr, false);
 
                 if (!SetInformationJobObject(handle, JobObjectInfoType.ExtendedLimitInformation, extendedInfoPtr,
-                        (uint) length))
+                        (uint)length))
                     throw new Exception(string.Format("Unable to set information.  Error: {0}",
                         Marshal.GetLastWin32Error()));
             }
@@ -96,12 +95,12 @@ namespace v2rayN
             Dispose(false);
         }
 
-        #endregion
+        #endregion IDisposable
 
         #region Interop
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        private static extern IntPtr CreateJobObject(IntPtr a, string lpName);
+        private static extern IntPtr CreateJobObject(IntPtr a, string? lpName);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool SetInformationJobObject(IntPtr hJob, JobObjectInfoType infoType, IntPtr lpJobObjectInfo, UInt32 cbJobObjectInfoLength);
@@ -113,13 +112,13 @@ namespace v2rayN
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool CloseHandle(IntPtr hObject);
 
-        #endregion
+        #endregion Interop
     }
 
     #region Helper classes
 
     [StructLayout(LayoutKind.Sequential)]
-    struct IO_COUNTERS
+    internal struct IO_COUNTERS
     {
         public UInt64 ReadOperationCount;
         public UInt64 WriteOperationCount;
@@ -129,9 +128,8 @@ namespace v2rayN
         public UInt64 OtherTransferCount;
     }
 
-
     [StructLayout(LayoutKind.Sequential)]
-    struct JOBOBJECT_BASIC_LIMIT_INFORMATION
+    internal struct JOBOBJECT_BASIC_LIMIT_INFORMATION
     {
         public Int64 PerProcessUserTimeLimit;
         public Int64 PerJobUserTimeLimit;
@@ -153,7 +151,7 @@ namespace v2rayN
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+    internal struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
     {
         public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation;
         public IO_COUNTERS IoInfo;
@@ -174,5 +172,5 @@ namespace v2rayN
         GroupInformation = 11
     }
 
-    #endregion
+    #endregion Helper classes
 }

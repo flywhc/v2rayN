@@ -1,190 +1,46 @@
-﻿using Grpc.Core;
-using System;
-using System.Collections.Generic;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
+using v2rayN.Base;
 using v2rayN.Mode;
-using v2rayN.Protos.Statistics;
 
 namespace v2rayN.Handler
 {
-    class StatisticsHandler
+    internal class StatisticsHandler
     {
-        private Mode.Config config_;
-        private ServerStatistics serverStatistics_;
-        private Channel channel_;
-        private StatsService.StatsServiceClient client_;
-        private bool exitFlag_;
+        private Config _config;
+        private ServerStatItem? _serverStatItem;
+        private List<ServerStatItem> _lstServerStat;
+        private Action<ServerSpeedItem> _updateFunc;
+        private StatisticsV2ray? _statisticsV2Ray;
+        private StatisticsSingbox? _statisticsSingbox;
 
-        Action<ulong, ulong, List<ServerStatItem>> updateFunc_;
+        public List<ServerStatItem> ServerStat => _lstServerStat;
+        public bool Enable { get; set; }
 
-        public bool Enable
+        public StatisticsHandler(Config config, Action<ServerSpeedItem> update)
         {
-            get; set;
-        }
-
-        public bool UpdateUI
-        {
-            get; set;
-        }
-
-
-        public List<ServerStatItem> Statistic
-        {
-            get
+            _config = config;
+            Enable = config.guiItem.enableStatistics;
+            if (!Enable)
             {
-                return serverStatistics_.server;
+                return;
             }
-        }
 
-        public StatisticsHandler(Mode.Config config, Action<ulong, ulong, List<ServerStatItem>> update)
-        {
-            //try
-            //{
-            //    if (Environment.Is64BitOperatingSystem)
-            //    {
-            //        FileManager.UncompressFile(Utils.GetPath("grpc_csharp_ext.x64.dll"), Resources.grpc_csharp_ext_x64_dll);
-            //    }
-            //    else
-            //    {
-            //        FileManager.UncompressFile(Utils.GetPath("grpc_csharp_ext.x86.dll"), Resources.grpc_csharp_ext_x86_dll);
-            //    }
-            //}
-            //catch (IOException ex)
-            //{
-            //    Utils.SaveLog(ex.Message, ex);
+            _updateFunc = update;
 
-            //}
+            Init();
+            Global.statePort = GetFreePort();
 
-            config_ = config;
-            Enable = config.enableStatistics;
-            UpdateUI = false;
-            updateFunc_ = update;
-            exitFlag_ = false;
-
-            LoadFromFile();
-
-            GrpcInit();
-
-            Task.Run(() => Run());
-        }
-
-        private void GrpcInit()
-        {
-            if (channel_ == null)
-            {
-                Global.statePort = GetFreePort();
-
-                channel_ = new Channel($"{Global.Loopback}:{Global.statePort}", ChannelCredentials.Insecure);
-                channel_.ConnectAsync();
-                client_ = new StatsService.StatsServiceClient(channel_);
-            }
+            _statisticsV2Ray = new StatisticsV2ray(config, UpdateServerStat);
+            _statisticsSingbox = new StatisticsSingbox(config, UpdateServerStat);
         }
 
         public void Close()
         {
             try
             {
-                exitFlag_ = true;
-                channel_.ShutdownAsync();
-            }
-            catch (Exception ex)
-            {
-                Utils.SaveLog(ex.Message, ex);
-            }
-        }
-
-        public void Run()
-        {
-            while (!exitFlag_)
-            {
-                try
-                {
-                    if (Enable && channel_.State == ChannelState.Ready)
-                    {
-                        QueryStatsResponse res = null;
-                        try
-                        {
-                            res = client_.QueryStats(new QueryStatsRequest() { Pattern = "", Reset = true });
-                        }
-                        catch (Exception ex)
-                        {
-                            //Utils.SaveLog(ex.Message, ex);
-                        }
-
-                        if (res != null)
-                        {
-                            string itemId = config_.indexId;
-                            ServerStatItem serverStatItem = GetServerStatItem(itemId);
-
-                            //TODO: parse output
-                            ParseOutput(res.Stat, out ulong up, out ulong down);
-
-                            serverStatItem.todayUp += up;
-                            serverStatItem.todayDown += down;
-                            serverStatItem.totalUp += up;
-                            serverStatItem.totalDown += down;
-
-                            if (UpdateUI)
-                            {
-                                updateFunc_(up, down, new List<ServerStatItem> { serverStatItem });
-                            }
-                        }
-                    }
-                    Thread.Sleep(config_.statisticsFreshRate);
-                    channel_.ConnectAsync();
-                }
-                catch (Exception ex)
-                {
-                    //Utils.SaveLog(ex.Message, ex);
-                }
-            }
-        }
-
-        public void LoadFromFile()
-        {
-            try
-            {
-                string result = Utils.LoadResource(Utils.GetPath(Global.StatisticLogOverall));
-                if (!Utils.IsNullOrEmpty(result))
-                {
-                    //转成Json
-                    serverStatistics_ = Utils.FromJson<ServerStatistics>(result);
-                }
-
-                if (serverStatistics_ == null)
-                {
-                    serverStatistics_ = new ServerStatistics();
-                }
-                if (serverStatistics_.server == null)
-                {
-                    serverStatistics_.server = new List<ServerStatItem>();
-                }
-
-                long ticks = DateTime.Now.Date.Ticks;
-                foreach (ServerStatItem item in serverStatistics_.server)
-                {
-                    if (item.dateNow != ticks)
-                    {
-                        item.todayUp = 0;
-                        item.todayDown = 0;
-                        item.dateNow = ticks;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Utils.SaveLog(ex.Message, ex);
-            }
-        }
-
-        public void SaveToFile()
-        {
-            try
-            {
-                Utils.ToJsonFile(serverStatistics_, Utils.GetPath(Global.StatisticLogOverall));
+                _statisticsV2Ray?.Close();
+                _statisticsSingbox?.Close();
             }
             catch (Exception ex)
             {
@@ -194,105 +50,112 @@ namespace v2rayN.Handler
 
         public void ClearAllServerStatistics()
         {
-            if (serverStatistics_ != null)
-            {
-                foreach (var item in serverStatistics_.server)
-                {
-                    item.todayUp = 0;
-                    item.todayDown = 0;
-                    item.totalUp = 0;
-                    item.totalDown = 0;
-                    // update ui display to zero
-                    updateFunc_(0, 0, new List<ServerStatItem> { item });
-                }
-
-                // update statistic json file
-                SaveToFile();
-            }
+            SqliteHelper.Instance.Execute($"delete from ServerStatItem ");
+            _serverStatItem = null;
+            _lstServerStat = new();
         }
 
-        private ServerStatItem GetServerStatItem(string itemId)
+        public void SaveTo()
         {
-            long ticks = DateTime.Now.Date.Ticks;
-            int cur = Statistic.FindIndex(item => item.itemId == itemId);
-            if (cur < 0)
-            {
-                Statistic.Add(new ServerStatItem
-                {
-                    itemId = itemId,
-                    totalUp = 0,
-                    totalDown = 0,
-                    todayUp = 0,
-                    todayDown = 0,
-                    dateNow = ticks
-                });
-                cur = Statistic.Count - 1;
-            }
-            if (Statistic[cur].dateNow != ticks)
-            {
-                Statistic[cur].todayUp = 0;
-                Statistic[cur].todayDown = 0;
-                Statistic[cur].dateNow = ticks;
-            }
-            return Statistic[cur];
-        }
-
-        private void ParseOutput(Google.Protobuf.Collections.RepeatedField<Stat> source, out ulong up, out ulong down)
-        {
-
-            up = 0; down = 0;
             try
             {
-
-                foreach (Stat stat in source)
-                {
-                    string name = stat.Name;
-                    long value = stat.Value;
-                    string[] nStr = name.Split(">>>".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-                    string type = "";
-
-                    name = name.Trim();
-
-                    name = nStr[1];
-                    type = nStr[3];
-
-                    if (name == Global.agentTag)
-                    {
-                        if (type == "uplink")
-                        {
-                            up = (ulong)value;
-                        }
-                        else if (type == "downlink")
-                        {
-                            down = (ulong)value;
-                        }
-                    }
-                }
+                SqliteHelper.Instance.UpdateAll(_lstServerStat);
             }
             catch (Exception ex)
             {
-                //Utils.SaveLog(ex.Message, ex);
+                Utils.SaveLog(ex.Message, ex);
+            }
+        }
+
+        private void Init()
+        {
+            SqliteHelper.Instance.Execute($"delete from ServerStatItem where indexId not in ( select indexId from ProfileItem )");
+
+            long ticks = DateTime.Now.Date.Ticks;
+            SqliteHelper.Instance.Execute($"update ServerStatItem set todayUp = 0,todayDown=0,dateNow={ticks} where dateNow<>{ticks}");
+
+            _lstServerStat = SqliteHelper.Instance.Table<ServerStatItem>().ToList();
+        }
+
+        private void UpdateServerStat(ServerSpeedItem server)
+        {
+            GetServerStatItem(_config.indexId);
+
+            if (server.proxyUp != 0 || server.proxyDown != 0)
+            {
+                _serverStatItem.todayUp += server.proxyUp;
+                _serverStatItem.todayDown += server.proxyDown;
+                _serverStatItem.totalUp += server.proxyUp;
+                _serverStatItem.totalDown += server.proxyDown;
+            }
+            if (Global.ShowInTaskbar)
+            {
+                server.indexId = _config.indexId;
+                server.todayUp = _serverStatItem.todayUp;
+                server.todayDown = _serverStatItem.todayDown;
+                server.totalUp = _serverStatItem.totalUp;
+                server.totalDown = _serverStatItem.totalDown;
+                _updateFunc(server);
+            }
+        }
+
+        private void GetServerStatItem(string indexId)
+        {
+            long ticks = DateTime.Now.Date.Ticks;
+            if (_serverStatItem != null && _serverStatItem.indexId != indexId)
+            {
+                _serverStatItem = null;
+            }
+
+            if (_serverStatItem == null)
+            {
+                _serverStatItem = _lstServerStat.FirstOrDefault(t => t.indexId == indexId);
+                if (_serverStatItem == null)
+                {
+                    _serverStatItem = new ServerStatItem
+                    {
+                        indexId = indexId,
+                        totalUp = 0,
+                        totalDown = 0,
+                        todayUp = 0,
+                        todayDown = 0,
+                        dateNow = ticks
+                    };
+                    SqliteHelper.Instance.Replace(_serverStatItem);
+                    _lstServerStat.Add(_serverStatItem);
+                }
+            }
+
+            if (_serverStatItem.dateNow != ticks)
+            {
+                _serverStatItem.todayUp = 0;
+                _serverStatItem.todayDown = 0;
+                _serverStatItem.dateNow = ticks;
             }
         }
 
         private int GetFreePort()
         {
-            int defaultPort = 28123;
             try
             {
-                // TCP stack please do me a favor
-                TcpListener l = new TcpListener(IPAddress.Loopback, 0);
-                l.Start();
-                int port = ((IPEndPoint)l.LocalEndpoint).Port;
-                l.Stop();
-                return port;
+                int defaultPort = 9090;
+                if (!Utils.PortInUse(defaultPort))
+                {
+                    return defaultPort;
+                }
+                for (int i = 0; i < 3; i++)
+                {
+                    TcpListener l = new(IPAddress.Loopback, 0);
+                    l.Start();
+                    int port = ((IPEndPoint)l.LocalEndpoint).Port;
+                    l.Stop();
+                    return port;
+                }
             }
-            catch (Exception ex)
+            catch
             {
-                // in case access denied
-                Utils.SaveLog(ex.Message, ex);
-                return defaultPort;
             }
+            return 69090;
         }
     }
 }

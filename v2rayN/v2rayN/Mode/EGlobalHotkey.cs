@@ -1,5 +1,4 @@
-﻿
-namespace v2rayN.Mode
+﻿namespace v2rayN.Mode
 {
     public enum EGlobalHotkey
     {
@@ -7,5 +6,6 @@ namespace v2rayN.Mode
         SystemProxyClear = 1,
         SystemProxySet = 2,
         SystemProxyUnchanged = 3,
+        SystemProxyPac = 4,
     }
 }

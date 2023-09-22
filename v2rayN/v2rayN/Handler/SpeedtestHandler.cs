@@ -1,37 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 using v2rayN.Mode;
 using v2rayN.Resx;
 
 namespace v2rayN.Handler
 {
-    class SpeedtestHandler
+    internal class SpeedtestHandler
     {
         private Config _config;
-        private V2rayHandler _v2rayHandler;
+        private CoreHandler _coreHandler;
         private List<ServerTestItem> _selecteds;
-        Action<string, string> _updateFunc;
+        private ESpeedActionType _actionType;
+        private Action<string, string, string> _updateFunc;
 
         public SpeedtestHandler(Config config)
         {
             _config = config;
         }
 
-        public SpeedtestHandler(Config config, V2rayHandler v2rayHandler, List<VmessItem> selecteds, ESpeedActionType actionType, Action<string, string> update)
+        public SpeedtestHandler(Config config, CoreHandler coreHandler, List<ProfileItem> selecteds, ESpeedActionType actionType, Action<string, string, string> update)
         {
             _config = config;
-            _v2rayHandler = v2rayHandler;
-            //_selecteds = Utils.DeepCopy(selecteds);
+            _coreHandler = coreHandler;
+            _actionType = actionType;
             _updateFunc = update;
 
             _selecteds = new List<ServerTestItem>();
             foreach (var it in selecteds)
             {
+                if (it.configType == EConfigType.Custom)
+                {
+                    continue;
+                }
+                if (it.port <= 0)
+                {
+                    continue;
+                }
                 _selecteds.Add(new ServerTestItem()
                 {
                     indexId = it.indexId,
@@ -40,35 +46,61 @@ namespace v2rayN.Handler
                     configType = it.configType
                 });
             }
+            //clear test result
+            foreach (var it in _selecteds)
+            {
+                switch (actionType)
+                {
+                    case ESpeedActionType.Ping:
+                    case ESpeedActionType.Tcping:
+                    case ESpeedActionType.Realping:
+                        UpdateFunc(it.indexId, ResUI.Speedtesting, "");
+                        ProfileExHandler.Instance.SetTestDelay(it.indexId, "0");
+                        break;
 
-            if (actionType == ESpeedActionType.Ping)
-            {
-                Task.Run(() => RunPing());
+                    case ESpeedActionType.Speedtest:
+                        UpdateFunc(it.indexId, "", ResUI.SpeedtestingWait);
+                        ProfileExHandler.Instance.SetTestSpeed(it.indexId, "0");
+                        break;
+
+                    case ESpeedActionType.Mixedtest:
+                        UpdateFunc(it.indexId, ResUI.Speedtesting, ResUI.SpeedtestingWait);
+                        ProfileExHandler.Instance.SetTestDelay(it.indexId, "0");
+                        ProfileExHandler.Instance.SetTestSpeed(it.indexId, "0");
+                        break;
+                }
             }
-            else if (actionType == ESpeedActionType.Tcping)
+
+            switch (actionType)
             {
-                Task.Run(() => RunTcping());
-            }
-            else if (actionType == ESpeedActionType.Realping)
-            {
-                Task.Run(() => RunRealPing());
-            }
-            else if (actionType == ESpeedActionType.Speedtest)
-            {
-                Task.Run(() => RunSpeedTestAsync());
+                case ESpeedActionType.Ping:
+                    Task.Run(RunPing);
+                    break;
+
+                case ESpeedActionType.Tcping:
+                    Task.Run(RunTcping);
+                    break;
+
+                case ESpeedActionType.Realping:
+                    Task.Run(RunRealPing);
+                    break;
+
+                case ESpeedActionType.Speedtest:
+                    Task.Run(RunSpeedTestAsync);
+                    break;
+
+                case ESpeedActionType.Mixedtest:
+                    Task.Run(RunMixedtestAsync);
+                    break;
             }
         }
 
-        private void RunPingSub(Action<ServerTestItem> updateFun)
+        private async Task RunPingSubAsync(Action<ServerTestItem> updateFun)
         {
             try
             {
-                foreach (var it in _selecteds)
+                foreach (var it in _selecteds.Where(it => it.configType != EConfigType.Custom))
                 {
-                    if (it.configType == EConfigType.Custom)
-                    {
-                        continue;
-                    }
                     try
                     {
                         Task.Run(() => updateFun(it));
@@ -79,7 +111,7 @@ namespace v2rayN.Handler
                     }
                 }
 
-                Thread.Sleep(10);
+                await Task.Delay(10);
             }
             catch (Exception ex)
             {
@@ -87,44 +119,47 @@ namespace v2rayN.Handler
             }
         }
 
-
-        private void RunPing()
+        private async void RunPing()
         {
-            RunPingSub((ServerTestItem it) =>
-            {
-                long time = Utils.Ping(it.address);
+            await RunPingSubAsync((ServerTestItem it) =>
+             {
+                 long time = Ping(it.address);
+                 var output = FormatOut(time, Global.DelayUnit);
 
-                _updateFunc(it.indexId, FormatOut(time, "ms"));
-            });
+                 ProfileExHandler.Instance.SetTestDelay(it.indexId, output);
+                 UpdateFunc(it.indexId, output);
+             });
         }
 
-        private void RunTcping()
+        private async void RunTcping()
         {
-            RunPingSub((ServerTestItem it) =>
+            await RunPingSubAsync((ServerTestItem it) =>
             {
                 int time = GetTcpingTime(it.address, it.port);
+                var output = FormatOut(time, Global.DelayUnit);
 
-                _updateFunc(it.indexId, FormatOut(time, "ms"));
+                ProfileExHandler.Instance.SetTestDelay(it.indexId, output);
+                UpdateFunc(it.indexId, output);
             });
         }
 
-        private void RunRealPing()
+        private Task RunRealPing()
         {
             int pid = -1;
             try
             {
                 string msg = string.Empty;
 
-                pid = _v2rayHandler.LoadV2rayConfigString(_config, _selecteds);
+                pid = _coreHandler.LoadCoreConfigString(_selecteds);
                 if (pid < 0)
                 {
-                    _updateFunc(_selecteds[0].indexId, ResUI.OperationFailed);
-                    return;
+                    UpdateFunc("", ResUI.FailedToRunCore);
+                    return Task.CompletedTask;
                 }
 
                 DownloadHandle downloadHandle = new DownloadHandle();
-                //Thread.Sleep(5000);
-                List<Task> tasks = new List<Task>();
+
+                List<Task> tasks = new();
                 foreach (var it in _selecteds)
                 {
                     if (!it.allowTest)
@@ -135,24 +170,23 @@ namespace v2rayN.Handler
                     {
                         continue;
                     }
-                    tasks.Add(Task.Run(() =>
+                    tasks.Add(Task.Run(async () =>
                     {
                         try
                         {
-                            WebProxy webProxy = new WebProxy(Global.Loopback, it.port);
-                            int responseTime = -1;
-                            string status = downloadHandle.GetRealPingTime(_config.constItem.speedPingTestUrl, webProxy, out responseTime);
-                            string output = Utils.IsNullOrEmpty(status) ? FormatOut(responseTime, "ms") : status;
+                            WebProxy webProxy = new(Global.Loopback, it.port);
+                            string output = await GetRealPingTime(downloadHandle, webProxy);
 
-                            _config.GetVmessItem(it.indexId)?.SetTestResult(output);
-                            _updateFunc(it.indexId, output);
+                            ProfileExHandler.Instance.SetTestDelay(it.indexId, output);
+                            UpdateFunc(it.indexId, output);
+                            int.TryParse(output, out int delay);
+                            it.delay = delay;
                         }
                         catch (Exception ex)
                         {
                             Utils.SaveLog(ex.Message, ex);
                         }
                     }));
-                    //Thread.Sleep(100);
                 }
                 Task.WaitAll(tasks.ToArray());
             }
@@ -162,35 +196,33 @@ namespace v2rayN.Handler
             }
             finally
             {
-                if (pid > 0) _v2rayHandler.V2rayStopPid(pid);
+                if (pid > 0) _coreHandler.CoreStopPid(pid);
+                ProfileExHandler.Instance.SaveTo();
             }
+
+            return Task.CompletedTask;
         }
 
         private async Task RunSpeedTestAsync()
         {
-            string testIndexId = string.Empty;
             int pid = -1;
+            //if (_actionType == ESpeedActionType.Mixedtest)
+            //{
+            //    _selecteds = _selecteds.OrderBy(t => t.delay).ToList();
+            //}
 
-            pid = _v2rayHandler.LoadV2rayConfigString(_config, _selecteds);
+            pid = _coreHandler.LoadCoreConfigString(_selecteds);
             if (pid < 0)
             {
-                _updateFunc(_selecteds[0].indexId, ResUI.OperationFailed);
+                UpdateFunc("", ResUI.FailedToRunCore);
                 return;
             }
 
-            string url = _config.constItem.speedTestUrl;
-            DownloadHandle downloadHandle2 = new DownloadHandle();
-            downloadHandle2.UpdateCompleted += (sender2, args) =>
-            {
-                _config.GetVmessItem(testIndexId)?.SetTestResult(args.Msg);
-                _updateFunc(testIndexId, args.Msg);
-            };
-            downloadHandle2.Error += (sender2, args) =>
-            {
-                _updateFunc(testIndexId, args.GetException().Message);
-            };
+            string url = _config.speedTestItem.speedTestUrl;
+            var timeout = _config.speedTestItem.speedTestTimeout;
 
-            var timeout = 8;
+            DownloadHandle downloadHandle = new();
+
             foreach (var it in _selecteds)
             {
                 if (!it.allowTest)
@@ -201,16 +233,112 @@ namespace v2rayN.Handler
                 {
                     continue;
                 }
-                testIndexId = it.indexId;
-                if (_config.FindIndexId(it.indexId) < 0) continue;
+                //if (it.delay < 0)
+                //{
+                //    UpdateFunc(it.indexId, "", ResUI.SpeedtestingSkip);
+                //    continue;
+                //}
+                ProfileExHandler.Instance.SetTestSpeed(it.indexId, "-1");
+                UpdateFunc(it.indexId, "", ResUI.Speedtesting);
 
-                WebProxy webProxy = new WebProxy(Global.Loopback, it.port);
-                await downloadHandle2.DownloadDataAsync(url, webProxy, timeout);
+                var item = LazyConfig.Instance.GetProfileItem(it.indexId);
+                if (item is null) continue;
+
+                WebProxy webProxy = new(Global.Loopback, it.port);
+
+                await downloadHandle.DownloadDataAsync(url, webProxy, timeout, (bool success, string msg) =>
+                {
+                    decimal.TryParse(msg, out decimal dec);
+                    if (dec > 0)
+                    {
+                        ProfileExHandler.Instance.SetTestSpeed(it.indexId, msg);
+                    }
+                    UpdateFunc(it.indexId, "", msg);
+                });
             }
 
-            if (pid > 0) _v2rayHandler.V2rayStopPid(pid);
+            if (pid > 0)
+            {
+                _coreHandler.CoreStopPid(pid);
+            }
+            UpdateFunc("", ResUI.SpeedtestingCompleted);
+            ProfileExHandler.Instance.SaveTo();
         }
 
+        private async Task RunSpeedTestMulti()
+        {
+            int pid = -1;
+            pid = _coreHandler.LoadCoreConfigString(_selecteds);
+            if (pid < 0)
+            {
+                UpdateFunc("", ResUI.FailedToRunCore);
+                return;
+            }
+
+            string url = _config.speedTestItem.speedTestUrl;
+            var timeout = _config.speedTestItem.speedTestTimeout;
+
+            DownloadHandle downloadHandle = new();
+
+            foreach (var it in _selecteds)
+            {
+                if (!it.allowTest)
+                {
+                    continue;
+                }
+                if (it.configType == EConfigType.Custom)
+                {
+                    continue;
+                }
+                if (it.delay < 0)
+                {
+                    UpdateFunc(it.indexId, "", ResUI.SpeedtestingSkip);
+                    continue;
+                }
+                ProfileExHandler.Instance.SetTestSpeed(it.indexId, "-1");
+                UpdateFunc(it.indexId, "", ResUI.Speedtesting);
+
+                var item = LazyConfig.Instance.GetProfileItem(it.indexId);
+                if (item is null) continue;
+
+                WebProxy webProxy = new(Global.Loopback, it.port);
+                _ = downloadHandle.DownloadDataAsync(url, webProxy, timeout, (bool success, string msg) =>
+                {
+                    decimal.TryParse(msg, out decimal dec);
+                    if (dec > 0)
+                    {
+                        ProfileExHandler.Instance.SetTestSpeed(it.indexId, msg);
+                    }
+                    UpdateFunc(it.indexId, "", msg);
+                });
+                await Task.Delay(2000);
+            }
+
+            await Task.Delay((timeout + 2) * 1000);
+
+            if (pid > 0)
+            {
+                _coreHandler.CoreStopPid(pid);
+            }
+            UpdateFunc("", ResUI.SpeedtestingCompleted);
+            ProfileExHandler.Instance.SaveTo();
+        }
+
+        private async Task RunMixedtestAsync()
+        {
+            await RunRealPing();
+
+            await Task.Delay(1000);
+
+            await RunSpeedTestMulti();
+        }
+
+        public async Task<string> GetRealPingTime(DownloadHandle downloadHandle, IWebProxy webProxy)
+        {
+            int responseTime = await downloadHandle.GetRealPingTime(_config.speedTestItem.speedPingTestUrl, webProxy, 10);
+            //string output = Utils.IsNullOrEmpty(status) ? FormatOut(responseTime, "ms") : status;
+            return FormatOut(responseTime, Global.DelayUnit);
+        }
 
         private int GetTcpingTime(string url, int port)
         {
@@ -224,11 +352,11 @@ namespace v2rayN.Handler
                     ipAddress = ipHostInfo.AddressList[0];
                 }
 
-                Stopwatch timer = new Stopwatch();
+                Stopwatch timer = new();
                 timer.Start();
 
-                IPEndPoint endPoint = new IPEndPoint(ipAddress, port);
-                Socket clientSocket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                IPEndPoint endPoint = new(ipAddress, port);
+                using Socket clientSocket = new(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
                 IAsyncResult result = clientSocket.BeginConnect(endPoint, null, null);
                 if (!result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(5)))
@@ -237,7 +365,6 @@ namespace v2rayN.Handler
 
                 timer.Stop();
                 responseTime = timer.Elapsed.Milliseconds;
-                clientSocket.Close();
             }
             catch (Exception ex)
             {
@@ -246,13 +373,55 @@ namespace v2rayN.Handler
             return responseTime;
         }
 
+        /// <summary>
+        /// Ping
+        /// </summary>
+        /// <param name="host"></param>
+        /// <returns></returns>
+        public long Ping(string host)
+        {
+            long roundtripTime = -1;
+            try
+            {
+                int timeout = 30;
+                int echoNum = 2;
+                using Ping pingSender = new();
+                for (int i = 0; i < echoNum; i++)
+                {
+                    PingReply reply = pingSender.Send(host, timeout);
+                    if (reply.Status == IPStatus.Success)
+                    {
+                        if (reply.RoundtripTime < 0)
+                        {
+                            continue;
+                        }
+                        if (roundtripTime < 0 || reply.RoundtripTime < roundtripTime)
+                        {
+                            roundtripTime = reply.RoundtripTime;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Utils.SaveLog(ex.Message, ex);
+                return -1;
+            }
+            return roundtripTime;
+        }
+
         private string FormatOut(object time, string unit)
         {
-            if (time.ToString().Equals("-1"))
-            {
-                return "Timeout";
-            }
-            return string.Format("{0}{1}", time, unit).PadLeft(8, ' ');
+            //if (time.ToString().Equals("-1"))
+            //{
+            //    return "Timeout";
+            //}
+            return $"{time}";
+        }
+
+        private void UpdateFunc(string indexId, string delay, string speed = "")
+        {
+            _updateFunc(indexId, delay, speed);
         }
     }
 }

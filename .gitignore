@@ -12,4 +12,6 @@
 .vs/VSWorkspaceState.json
 /v2rayN/v2rayUpgrade/bin
 /v2rayN/v2rayUpgrade/obj
+*.user
+/.vs/v2rayN
 *.suo

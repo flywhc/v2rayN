@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace v2rayN.Mode
+﻿namespace v2rayN.Mode
 {
     /// <summary>
     /// Tcp伪装http的Request，只要Host
@@ -8,7 +6,7 @@ namespace v2rayN.Mode
     public class V2rayTcpRequest
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public RequestHeaders headers { get; set; }
     }
@@ -16,10 +14,8 @@ namespace v2rayN.Mode
     public class RequestHeaders
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public List<string> Host { get; set; }
     }
-
-
 }
